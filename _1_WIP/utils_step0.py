@@ -2,6 +2,7 @@ import argparse
 import os
 import pickle
 import numpy as np
+import tensorflow as tf
 
 # Parameter
 default_dir   = 'C:/Users/mo/home/_eSDC2_/_PRJ02_/_2_WIP/_1_forge/_testing_/'
@@ -16,11 +17,13 @@ default_full  = default_dir+'data/jittered/full/'
 default_tb    = default_dir+'data/tboard/'
 default_log   = default_dir+'logs/nn_logs/'
 default_ckp   = default_dir+'logs/nn_logs/'
+default_sprImg= default_dir+'data/tboard/_sp_valid_2144x2144.png'
+default_sprTsv= default_dir+'data/tboard/_sp_valid_2144x2144.tsv'
 
 
 # Helper function: command-line / parse parameters
 def parse_args():
-    # e m o q s u v w x y z
+    # x y z
     parser = argparse.ArgumentParser(prog='traffic sign recognition', description='train a CNN to recognize traffic sign')
     parser.add_argument('-p', '--dir',    dest='dir', help='root directory path', action='store', type=str, default=default_dir)
     parser.add_argument('-d', '--dtset',  dest='dtset', help='data directory path', action='store', type=str, default=default_data)
@@ -41,8 +44,58 @@ def parse_args():
 
     parser.add_argument('-b', '--tab',    dest='tab', help='table size', action='store', type=list, default=[5,10])
 
+    parser.add_argument('-q', '--class',  dest='n_classes', help='number of classes', action='store', type=int, default=43)
+    parser.add_argument('-e', '--epoch',  dest='epochs', help='epochs', action='store', type=int, default=2) # 100)
+    parser.add_argument('-m', '--rate',   dest='rate', help='learning rate', action='store', type=float, default=0.00085)
+    parser.add_argument('-s', '--dropout',   dest='dropout', help='dropout rate', action='store', type=float, default=0.67)
+    parser.add_argument('-u', '--bsize',  dest='batch_size', help='batch size', action='store', type=int, default=100)
+
+    parser.add_argument('-v', '--sprImg', dest='sprImg', help='sprite image', action='store', type=str, default=default_sprImg)
+    parser.add_argument('-w', '--sprTsv', dest='sprTsv', help='sprite label', action='store', type=str, default=default_sprTsv)
+
     args   = parser.parse_args()
     return args
+
+
+# Helper function: parameters
+class parameters(object):
+    def __init__(self,
+                 x1        = tf.placeholder(tf.float32, (None, 32, 32, 1)),
+                 x3        = tf.placeholder(tf.float32, (None, 32, 32, 3)),
+                 y         = tf.placeholder(tf.int32, (None)),
+                 keep_prob = tf.placeholder(tf.float32),
+                 mu        = 0,
+                 sigma     = 0.1 ):
+
+        self.x1         = x1        # input = placeholder for grayscale image
+        self.x3         = x3        # input = placeholder for RGB image
+        self.y          = y         # label
+        self.keep_prob  = keep_prob # dropout rate
+        # self.one_hot_y  = one_hot_y
+        self.mu         = mu        # hyperparameters
+        self.sigma      = sigma     # hyperparameters
+
+    def x1(self):
+        return self.x1
+
+    def x3(self):
+        return self.x3
+
+    def y(self):
+        return self.y
+
+    def keep_prob(self):
+        return self.keep_prob
+
+    # def one_hot_y(self):
+    #     return self.one_hot_y
+
+    def mu(self):
+        return self.mu
+
+    def sigma(self):
+        return self.sigma
+
 
 # Helper function: create directory tree
 def dir_check(path):
@@ -71,16 +124,34 @@ def data_load(args, file_pickled='train.p'):
     except:
         raise IOError('the project data set are not found in the data directory')
 
-def chMap(image):
+# def chMap(image):
+#     if image.shape[-1] == 3:
+#         cMap ='rgb'
+#         ch   = 3
+#     elif image.shape[-1] == 32 or image.shape[-1] == 1:
+#         cMap ='gray'
+#         ch   = 1
+#     else:
+#         raise ValueError('[ERROR] info | channel : {}, Current image.shape: {}'.format(ch,image.shape))
+#     return cMap, ch
+
+def channel(image):
     if image.shape[-1] == 3:
-        cMap ='rgb'
         ch   = 3
     elif image.shape[-1] == 32 or image.shape[-1] == 1:
-        cMap ='gray'
         ch   = 1
     else:
         raise ValueError('[ERROR] info | channel : {}, Current image.shape: {}'.format(ch,image.shape))
-    return cMap, ch
+    return ch
+
+def color_map(image):
+    if image.shape[-1] == 3:
+        cMap ='rgb'
+    elif image.shape[-1] == 32 or image.shape[-1] == 1:
+        cMap ='gray'
+    else:
+        raise ValueError('[ERROR] info | channel : {}, Current image.shape: {}'.format(ch,image.shape))
+    return cMap
 
 def main():
     args = parse_args()
