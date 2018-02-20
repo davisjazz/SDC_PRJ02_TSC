@@ -68,6 +68,11 @@
 . jupiter notebook: Embed a YouTube video
 ==> https://stackoverflow.com/questions/11804820/embed-a-youtube-video
 # ----------------------------------------------
+# IDE
+# ----------------------------------------------
+. Install PyCharm and Anaconda (Windows /Mac/Ubuntu)
+==> https://medium.com/@GalarnykMichael/setting-up-pycharm-with-anaconda-plus-installing-packages-windows-mac-db2b158bd8c
+# ----------------------------------------------
 # EXCEL
 # ----------------------------------------------
 . Traduction des formules Excel français/anglais

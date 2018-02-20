@@ -1,91 +1,141 @@
-from utils_step0 import parse_args, dir_check, dir_create, data_load, chMap
-from utils_step1 import ocrLabel, indexClass, dataExplo
-from utils_step2 import dataVisu, showTrace
-from utils_step3 import hFct, dataPPro, proAll, creaShow
-from utils_step4 import jitShift, jitRot, jitCrop, barPrg, jitData, jitItall, jitListChart
+from utils_step0 import parse_args, parameters, dir_check, dir_create, data_load, channel, color_map
+# from utils_step1 import ocrLabel, indexClass, dataExplo
+# from utils_step2 import dataVisu, showTrace
+# from utils_step3 import hFct, dataPPro, proAll, creaShow
+# from utils_step4 import jitShift, jitRot, jitCrop, barPrg, jitData, jitItall, jitListChart
 import pandas as pd
 from sklearn.utils import shuffle
 from shutil import copyfile
-# import numpy as np
-# from numpy import newaxis
-# import pickle
-# import csv, cv2
-# import os
-# import random
-# import prettyplotlib as ppl
-# import brewer2mpl
-# import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
+from tensorflow.contrib.layers import flatten
+from datetime import datetime as dt
 
-# Helper function: tensorboard
-class tBoard(object):
-    def __init__(self):
-        pass
-    
-    def dataSprite(dataImg, dataLabel):
-        '''Calculate the validation dataset lenght'''
-        import math
-        num0 = math.ceil(len(dataImg)**0.5)
-        num0 *= num0
-        # TB.E-V: outImg, outLabel
-        outImg, outLabel = np.empty((num0,dataImg.shape[1],dataImg.shape[2],dataImg.shape[3])), np.empty((num0))
-        outImg[:dataImg.shape[0]], outLabel[:dataLabel.shape[0]] = dataImg[:].copy(), dataLabel[:].copy()
-        outImg[dataImg.shape[0]:], outLabel[dataLabel.shape[0]:] = dataImg[-1], dataLabel[-1]
-        return outImg, outLabel
+# Helper function: convolutional layer
+def layer_conv(flags, input, name='layer_1_', filter=5, size_in=3, size_out=6, padding='VALID', regularization=None, activation=None, leak=0.2):
+    # create a convolutional layer: input = 32x32xsize_in, output = 28x28xsize_out
+    with tf.name_scope(name+'conv'):
+        shape_output = [filter, filter, size_in, size_out]
+        w = tf.Variable(tf.truncated_normal(shape_output, mean=flags.mu, stddev=flags.sigma), name=name + '_w')
+        b = tf.Variable(tf.constant(0.1, shape=[size_out]), name=name + '_b')
+        x = tf.nn.conv2d(input, w, strides=[1, 1, 1, 1], padding=padding)
 
-        
-    def iNitb(X_valEV, embedding_size, embedding_input):
-        # Combine all of the summary nodes into a single op
-        merged = tf.summary.merge_all()
-        # Setup a 2D tensor variable that holds embedding
-        embedding  = tf.Variable(tf.zeros([len(X_valEV), embedding_size]), name="test_embedding") # 4489, embedding_size
-        assignment = embedding.assign(embedding_input)        
-        return merged, embedding, assignment
+        # activation
+        if activation is None:
+            pass
+        elif activation == 'relu':
+            x = tf.nn.relu(tf.add(x, b))
+        elif activation == 'leaky_relu':
+            f1 = 0.5 * (1 + leak)
+            f2 = 0.5 * (1 - leak)
+            x = f1 * tf.add(x, b) + f2 * abs(tf.add(x, b))
+
+        # regularization
+        if regularization is None:
+            pass
+        elif regularization == 'max_pool':
+            x = tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding=padding)
+
+        return x
+
+# Helper function: full connected layer
+def layer_fcon(flags, input, name='layer_2_', size_in=3, size_out=6, regularization=None, activation=None, leak=0.2):
+    # create a full connected layer: input = size_in, output = size_out
+    with tf.name_scope(name+'fc'):
+        w = tf.Variable(tf.truncated_normal([size_in, size_out], stddev=flags.sigma), name=name + '_w')
+        b = tf.Variable(tf.constant(0.1, shape=[size_out]), name=name + '_b')
+        x = tf.add(tf.matmul(input, w), b)
+
+        # activation
+        if activation is None:
+            pass
+        elif activation == 'relu':
+            x = tf.nn.relu(tf.add(x, b))
+        elif activation == 'leaky_relu':
+            f1 = 0.5 * (1 + leak)
+            f2 = 0.5 * (1 - leak)
+            x = f1 * tf.add(x, b) + f2 * abs(tf.add(x, b))
+
+        # regularization
+        if regularization is None:
+            pass
+        elif regularization == 'dropout':
+            x = tf.nn.dropout(x, flags.keep_prob)
+
+        return x
 
 
-    def logWriter(sess):
-        # Create a log writer. run 'tensorboard --logdir=./logs/nn_logs' ------
-        #from datetime import datetime as dt
-        now = dt.now()
-        str0= now.strftime("%y%m%dx%H%M")
-        str1= "./logs/nn_logs/" + str0 + "/"
-        writer = tf.summary.FileWriter(str1, sess.graph) # for 0.8
-        writer.add_graph(sess.graph)
-        return str0, str1, writer
+# Helper function: flatten layer
+def layer_flatten(input, name='layer_3_'):
+    with tf.name_scope(name+'fl'):
+        x = flatten(input)
+    return x
 
-    # Embedding Visualization: configuration ---------------------------------- 
-    def eVisu(sprImg,sprTsv,sprPath,LOGDIR,sIze,embedding,writer):
-        '''TensorBoard: Embedding Visualization'''
-        # Note: use the same LOG_DIR where you stored your checkpoint.
-        inFileImg, inFileTvs = sprPath+sprImg, sprPath+sprTsv
-        outFileImg, outFileTvs = LOGDIR+sprImg, LOGDIR+sprTsv      
-        copyfile(inFileImg,outFileImg)
-        copyfile(inFileTvs,outFileTvs)
-        # 4. Format:
-        config = tf.contrib.tensorboard.plugins.projector.ProjectorConfig()
-        # 5. Add as much embedding as is necessary (Here we add only one)
-        embedding_config = config.embeddings.add()
-        embedding_config.tensor_name = embedding.name         #embedding_var.name
-        embedding_config.sprite.image_path = outFileImg
-        # 6. Link this tensor to its labels (e.g. metadata file)
-        embedding_config.metadata_path = outFileTvs
-        # 7. Specify the width and height of a single thumbnail.
-        embedding_config.sprite.single_image_dim.extend([sIze, sIze])
-        # 8. Saves a configuration file that TensorBoard will read during startup
-        tf.contrib.tensorboard.plugins.projector.visualize_embeddings(writer, config)
-        return config, embedding_config
 
-# Helper function: 
+# Helper function: evaluate the loss and accuracy of the model
+def evaluate(args, flags, logits, images, labels, one_hot_y):
+    correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(one_hot_y, 1))
+    accuracy_operation = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+    n_images       = len(images)
+    total_accuracy = 0
+    sess           = tf.get_default_session()
+
+    if channel(images[0]) == 3:
+        x = flags.x3
+    else:
+        x = flags.x1
+
+    for offset in range(0, n_images, args.batch_size):
+        batch_x, batch_y = images[offset:offset + args.batch_size], labels[offset:offset + args.batch_size]
+        accuracy         = sess.run(accuracy_operation, feed_dict={x: batch_x, flags.y: batch_y, flags.keep_prob: args.dropout})
+        total_accuracy  += (accuracy * len(batch_x))
+    return total_accuracy / n_images
+
+
+def model_train(args, flags, logits, images_train, labels_train, images_validation, labels_validation):
+    one_hot_y = tf.one_hot(flags.y, 43)
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=one_hot_y, logits=logits)
+    loss_operation = tf.reduce_mean(cross_entropy)
+    optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
+    training_operation = optimizer.minimize(loss_operation)
+
+    if channel(images_train[0]) == 3:
+        x = flags.x3
+    else:
+        x = flags.x1
+
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        n_images = len(images_train)
+
+        print('Training... rate: {}, epochs: {}, batch size: {}, dropout rate: {}'.format(args.rate, args.epochs, args.batch_size, args.dropout))
+        print()
+        for i in range(args.epochs):
+            images_train, labels_train = shuffle(images_train, labels_train)
+            for offset in range(0, n_images, args.batch_size):
+                end = offset + args.batch_size
+                batch_x, batch_y = images_train[offset:end], labels_train[offset:end]
+                sess.run(training_operation, feed_dict={x: batch_x, flags.y: batch_y, flags.keep_prob: args.dropout})
+
+            validation_accuracy = evaluate(args, flags, logits, images_validation, labels_validation, one_hot_y)
+            print('epoch: {:3} | Val.accu : {:.3f}'.format(i + 1, validation_accuracy))
+
+        saver = tf.train.Saver()
+        saver.save(sess, './lenet')
+        print("Model saved")
+
+
 
 
 def main():
-    args = parse_args()
+    # parameters and placeholders
+    args  = parse_args()
+    flags = parameters()
 
-    x = tBoard()
+    X_train, y_train, s_train, c_train = data_load(args, 'train.p')
 
+    print('channel X_train[0] : {}'.format(channel(X_train[0])))
 
 if __name__ == '__main__':
     main()
-
-'''
-#BACKLOG: . rewrite and clean the code
-'''

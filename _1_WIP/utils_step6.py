@@ -1,133 +1,63 @@
-from utils_step0 import parse_args, dir_check, dir_create, data_load, chMap
-from utils_step1 import ocrLabel, indexClass, dataExplo
-from utils_step2 import dataVisu, showTrace
-from utils_step3 import hFct, dataPPro, proAll, creaShow
-from utils_step4 import jitShift, jitRot, jitCrop, barPrg, jitData, jitItall, jitListChart
-from utils_step5 import tBoard
+from utils_step0 import parse_args, parameters, dir_check, dir_create, data_load, channel, color_map
+# from utils_step1 import ocrLabel, indexClass, dataExplo
+# from utils_step2 import dataVisu, showTrace
+# from utils_step3 import hFct, dataPPro, proAll, creaShow
+# from utils_step4 import jitShift, jitRot, jitCrop, barPrg, jitData, jitItall, jitListChart
+from utils_step5 import layer_conv, layer_fcon, layer_flatten, evaluate, model_train
 import pandas as pd
 from sklearn.utils import shuffle
 from shutil import copyfile
+import numpy as np
+import tensorflow as tf
+from datetime import datetime as dt
 
-# Helper function: classifier
-class tSign(object):
+
+# Helper function: create a CNN model
+class Model(object):
     def __init__(self):
         pass
-    
-    # In[step2.5]: Preliminaries - initialization
-    def iNit(cMap, n_classes):
-        # Remove previous Tensors and Operations
-        tf.reset_default_graph()
-        sess = tf.InteractiveSession() # sess = tf.Session()
-        # Setup placeholders: features and labels       
-        if cMap =='rgb':
-            ch = 3
-        elif cMap =='gray':
-            ch = 1
+
+    def model_lenet(self, flags, image):
+        '''
+        Layer 1: Conv{In:32x32xchannel;Out:28x28x6} > Activ. > mxPooling{In:28x28x6;Out:14x14x6}
+        Layer 2: Conv{In:14x14x6;Out:10x10x16} > Activ. > mxPooling{In:10x10x16;Out:5x5x16}
+        Flatten: Input = 5x5xsize_out. Output = 400.
+        Layer 3: Fully Connected{In:400;Out:120} > Activ. > Dropout
+        Layer 4: Fully Connected{In:120;Out:84} > Activ. > Dropout
+        Layer 5: Fully Connected{In:84;Out:43}
+        '''
+        if channel(image) == 3:
+            model = layer_conv(flags, flags.x3, name='layer_1_', filter=5, size_in=3, size_out=6, padding='VALID', regularization='max_pool', activation='relu')
         else:
-            raise ValueError('Current cMap:',cMap,'. cMap should be ''rgb'' or ''gray''')
-            
-        x = tf.placeholder(tf.float32, (None, 32, 32, ch), name='input')  
-        y = tf.placeholder(tf.uint8, (None), name='label') # y = tf.placeholder(tf.int32, (None, len(y_train)))
-        # One-Hot
-        one_hot_y = tf.one_hot(y, n_classes)
-        # Add dropout to input and hidden layers
-        keep_prob = tf.placeholder(tf.float32) # probability to keep units
-        # Add image summary
-        tf.summary.image('input', x, 8)             
-        return sess, x, y, ch, one_hot_y, keep_prob
-          
-            
-    # In[step2.5]: helper functions - conv_layer, fc_layer
-    # conv_layer: Build a convolutional layer ---------------------------------
-    def conv_layer(input,filter_size,size_in,size_out,nAme="conv", mu=0, sigma=0.1,pAdding='VALID',maxPool=True, aCtivation='relu', leak=0.2):
-        with tf.name_scope(nAme):
-            # Layer: Convolutional. Input = 32x32xsize_in. Output = 28x28xsize_out.
-            shape0 = [filter_size, filter_size, size_in, size_out]
-            w = tf.Variable(tf.truncated_normal(shape0, mean = mu, stddev = sigma), name=nAme+"W")
-            b = tf.Variable(tf.constant(0.1, shape=[size_out]), name=nAme+"B")
-            conv = tf.nn.conv2d(input, w, strides=[1, 1, 1, 1], padding=pAdding)
+            model = layer_conv(flags, flags.x1, name='layer_1_', filter=5, size_in=1, size_out=6, padding='VALID', regularization='max_pool', activation='relu')
+        model = layer_conv(flags, model, name='layer_2_', filter=5, size_in=6, size_out=16, padding='VALID', regularization='max_pool', activation='relu')
+        model = layer_flatten(model, name='layer_3_')
+        model = layer_fcon(flags, model, name='layer_4_', size_in=400, size_out=120, regularization='dropout', activation='relu')
+        model = layer_fcon(flags, model, name='layer_5_', size_in=120, size_out=84, regularization='dropout', activation='relu')
+        model = layer_fcon(flags, model, name='layer_6_', size_in=84, size_out=43, regularization=None, activation=None)
 
-            # Activation
-            if aCtivation =='relu':
-                act  = tf.nn.relu(tf.add(conv, b)) #act = tf.nn.relu(conv + b)
-                str9 = 'RELU'
-            else:
-                f1  = 0.5 * (1 + leak)
-                f2  = 0.5 * (1 - leak)
-                act = f1 * tf.add(conv, b) + f2 * abs(tf.add(conv, b))  
-                str9 = 'LEAKY RELU'
-            
-            # Add histogram summaries for weights and biases
-            tf.summary.histogram(nAme+"_weights", w)
-            tf.summary.histogram(nAme+"_biases", b)
-            tf.summary.histogram(nAme+"_activations", act)
-            
-            if maxPool: 
-                # Pooling. Input = 28x28xsize_out. Output = 14x14xsize_out.
-                output = tf.nn.max_pool(act, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding=pAdding)
-            else:
-                output = act          
-        return output    
-
-
-    # fc_layer: Build a full connected layer ----------------------------------
-    def fc_layer(input, size_in, size_out, nAme="fc", act = True, drop= True, keep_prob = tf.placeholder(tf.float32), aCtivation='relu', leak=0.2):       
-        with tf.name_scope(nAme):
-            # Layer: Convolutional. Input = size_in. Output = size_out.
-            w = tf.Variable(tf.truncated_normal([size_in, size_out], stddev=0.1), name=nAme+"W")
-            b = tf.Variable(tf.constant(0.1, shape=[size_out]), name=nAme+"B")
-            x = tf.add(tf.matmul(input, w), b)
-            # Add histogram summaries for weights and biases
-            tf.summary.histogram(nAme+"_weights", w)
-            tf.summary.histogram(nAme+"_biases", b)
-
-            if act: # Activation and histogram summaries:
-                if aCtivation =='relu':
-                    x = tf.nn.relu(x)
-                    str9 = 'RELU'
-                else:
-                    f1  = 0.5 * (1 + leak)
-                    f2  = 0.5 * (1 - leak)
-                    x   = f1 * x + f2 * abs(x)  
-                    str9 = 'LEAKY RELU'
-                tf.summary.histogram(nAme+"_activations", x)
-            if drop: # Dropout
-                x = tf.nn.dropout(x, keep_prob)
-            return x
-
-    # Define cost function ----------------------------------------------------
-    def loss(logits, one_hot_y, rate, mod0):
-        with tf.name_scope("cost"):
-            cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=one_hot_y, name="xent")  
-            #cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, one_hot_y) #<-- error msg
-            lossOpe = tf.reduce_mean(cross_entropy, name="loss")
-            optimizer = tf.train.AdamOptimizer(learning_rate = rate, name="optAdam")
-            trainingOpe = optimizer.minimize(lossOpe, name="optMin")
-            # Add scalar summary for loss (cost) tensor
-            tf.summary.scalar(mod0+'_loss', lossOpe)        
-        return lossOpe, trainingOpe
-
-
-    # Define accuracy fct -----------------------------------------------------
-    def accuracy(logits, one_hot_y, mod0):
-        with tf.name_scope("accuracy"):
-            correctPrd = tf.equal(tf.argmax(logits, 1), tf.argmax(one_hot_y, 1))
-            accuOpe = tf.reduce_mean(tf.cast(correctPrd, tf.float32))
-            # Add scalar summary for accuracy tensor
-            tf.summary.scalar(mod0+'_accuracy', accuOpe)        
-        return accuOpe
-
-
-# Helper function: 
+        return model
 
 
 def main():
+    # parameters and placeholders
     args = parse_args()
+    flags = parameters()
+
+    # load and shuffle data
+    X_train, y_train, s_train, c_train = data_load(args, 'train.p')
+    X_valid, y_valid, s_valid, c_valid = data_load(args, 'valid.p')
+    X_train, y_train = shuffle(X_train, y_train)
+    X_valid, y_valid = shuffle(X_valid, y_valid)
+
+    # build and train the model
+    cnn    = Model()
+    logits = cnn.model_lenet(flags, X_train[0])
+    model_train(args, flags, logits, X_train, y_train, X_valid, y_valid)
+
+    # evaluate the model
+    # compile the model
 
 
 if __name__ == '__main__':
     main()
-
-'''
-#BACKLOG: . rewrite and clean the code
-'''
