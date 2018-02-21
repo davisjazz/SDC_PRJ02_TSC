@@ -45,6 +45,11 @@
 . [github] A successful Git branching model
 ==> http://nvie.com/posts/a-successful-git-branching-model/
 # ----------------------------------------------
+# TENSORFLOW
+# ----------------------------------------------
+. Saving and Restoring
+==> https://www.tensorflow.org/programmers_guide/saved_model
+# ----------------------------------------------
 # TENSORBOARD
 # ----------------------------------------------
 . How does one interpret histograms given by TensorFlow in TensorBoard?

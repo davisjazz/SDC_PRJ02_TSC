@@ -17,7 +17,7 @@ class Model(object):
     def __init__(self):
         pass
 
-    def model_lenet(self, flags, image):
+    def model_1(self, flags, image):
         '''
         Layer 1: Conv{In:32x32xchannel;Out:28x28x6} > Activ. > mxPooling{In:28x28x6;Out:14x14x6}
         Layer 2: Conv{In:14x14x6;Out:10x10x16} > Activ. > mxPooling{In:10x10x16;Out:5x5x16}
@@ -52,7 +52,7 @@ def main():
 
     # build and train the model
     cnn    = Model()
-    logits = cnn.model_lenet(flags, X_train[0])
+    logits = cnn.model_1(flags, X_train[0])
     model_train(args, flags, logits, X_train, y_train, X_valid, y_valid)
 
     # evaluate the model

@@ -16,8 +16,8 @@ def layer_conv(flags, input, name='layer_1_', filter=5, size_in=3, size_out=6, p
     # create a convolutional layer: input = 32x32xsize_in, output = 28x28xsize_out
     with tf.name_scope(name+'conv'):
         shape_output = [filter, filter, size_in, size_out]
-        w = tf.Variable(tf.truncated_normal(shape_output, mean=flags.mu, stddev=flags.sigma), name=name + '_w')
-        b = tf.Variable(tf.constant(0.1, shape=[size_out]), name=name + '_b')
+        w = tf.Variable(tf.truncated_normal(shape_output, mean=flags.mu, stddev=flags.sigma), name=name + 'w')
+        b = tf.Variable(tf.constant(0.1, shape=[size_out]), name=name + 'b')
         x = tf.nn.conv2d(input, w, strides=[1, 1, 1, 1], padding=padding)
 
         # activation
@@ -42,8 +42,8 @@ def layer_conv(flags, input, name='layer_1_', filter=5, size_in=3, size_out=6, p
 def layer_fcon(flags, input, name='layer_2_', size_in=3, size_out=6, regularization=None, activation=None, leak=0.2):
     # create a full connected layer: input = size_in, output = size_out
     with tf.name_scope(name+'fc'):
-        w = tf.Variable(tf.truncated_normal([size_in, size_out], stddev=flags.sigma), name=name + '_w')
-        b = tf.Variable(tf.constant(0.1, shape=[size_out]), name=name + '_b')
+        w = tf.Variable(tf.truncated_normal([size_in, size_out], stddev=flags.sigma), name=name + 'w')
+        b = tf.Variable(tf.constant(0.1, shape=[size_out]), name=name + 'b')
         x = tf.add(tf.matmul(input, w), b)
 
         # activation
@@ -78,7 +78,7 @@ def evaluate(args, flags, logits, images, labels, one_hot_y):
     accuracy_operation = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
     n_images       = len(images)
-    total_accuracy = 0
+    accuracy_total = 0
     sess           = tf.get_default_session()
 
     if channel(images[0]) == 3:
@@ -89,8 +89,8 @@ def evaluate(args, flags, logits, images, labels, one_hot_y):
     for offset in range(0, n_images, args.batch_size):
         batch_x, batch_y = images[offset:offset + args.batch_size], labels[offset:offset + args.batch_size]
         accuracy         = sess.run(accuracy_operation, feed_dict={x: batch_x, flags.y: batch_y, flags.keep_prob: args.dropout})
-        total_accuracy  += (accuracy * len(batch_x))
-    return total_accuracy / n_images
+        accuracy_total  += (accuracy * len(batch_x))
+    return accuracy_total / n_images
 
 
 def model_train(args, flags, logits, images_train, labels_train, images_validation, labels_validation):
@@ -119,13 +119,21 @@ def model_train(args, flags, logits, images_train, labels_train, images_validati
                 sess.run(training_operation, feed_dict={x: batch_x, flags.y: batch_y, flags.keep_prob: args.dropout})
 
             validation_accuracy = evaluate(args, flags, logits, images_validation, labels_validation, one_hot_y)
-            print('epoch: {:3} | Val.accu : {:.3f}'.format(i + 1, validation_accuracy))
+            print('epoch: {:3} | validation accuracy : {:.3f}'.format(i + 1, validation_accuracy))
 
         saver = tf.train.Saver()
-        saver.save(sess, './lenet')
+        saver.save(sess, './model')
         print("Model saved")
 
 
+# Helper function: test the model
+def model_test(args, flags, logits, images_test, labels_test):
+    one_hot_y = tf.one_hot(flags.y, 43)
+    with tf.Session() as sess:
+        saver_new = tf.train.Saver() # tf.train.import_meta_graph('./model.meta')
+        saver_new.restore(sess, tf.train.latest_checkpoint('./'))
+        accuracy_test = evaluate(args, flags, logits,  images_test, labels_test, one_hot_y)
+        print("test accuracy = {:.3f}".format(accuracy_test))
 
 
 def main():
