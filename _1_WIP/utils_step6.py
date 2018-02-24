@@ -1,15 +1,6 @@
 from utils_step0 import parse_args, parameters, dir_check, dir_create, data_load, channel, color_map
-# from utils_step1 import ocrLabel, indexClass, dataExplo
-# from utils_step2 import dataVisu, showTrace
-# from utils_step3 import hFct, dataPPro, proAll, creaShow
-# from utils_step4 import jitShift, jitRot, jitCrop, barPrg, jitData, jitItall, jitListChart
-from utils_step5 import layer_conv, layer_fcon, layer_flatten, evaluate, model_train
-import pandas as pd
+from utils_step5 import layer_conv, layer_fcon, layer_flatten, evaluate, model_train, model_test
 from sklearn.utils import shuffle
-from shutil import copyfile
-import numpy as np
-import tensorflow as tf
-from datetime import datetime as dt
 
 
 # Helper function: create a CNN model
@@ -47,6 +38,8 @@ def main():
     # load and shuffle data
     X_train, y_train, s_train, c_train = data_load(args, 'train.p')
     X_valid, y_valid, s_valid, c_valid = data_load(args, 'valid.p')
+    # X_train, y_train = data_load(args, 'data/jittered/full/JIT_full_3000_train_0Rgb.p')
+    # X_valid, y_valid = data_load(args, 'data/preprocessed/valid_0Rgb.p')
     X_train, y_train = shuffle(X_train, y_train)
     X_valid, y_valid = shuffle(X_valid, y_valid)
 
@@ -54,9 +47,6 @@ def main():
     cnn    = Model()
     logits = cnn.model_1(flags, X_train[0])
     model_train(args, flags, logits, X_train, y_train, X_valid, y_valid)
-
-    # evaluate the model
-    # compile the model
 
 
 if __name__ == '__main__':
