@@ -1,12 +1,7 @@
 from utils_step0 import parse_args, parameters, dir_check, dir_create, data_load, channel, color_map
 from utils_step5 import layer_conv, layer_fcon, layer_flatten, evaluate, model_train, model_test
 from utils_step6 import Model
-import pandas as pd
 from sklearn.utils import shuffle
-from shutil import copyfile
-import numpy as np
-import tensorflow as tf
-from datetime import datetime as dt
 
 
 def main():

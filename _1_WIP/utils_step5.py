@@ -1,15 +1,7 @@
 from utils_step0 import parse_args, parameters, dir_check, dir_create, data_load, channel, color_map
-# from utils_step1 import ocrLabel, indexClass, dataExplo
-# from utils_step2 import dataVisu, showTrace
-# from utils_step3 import hFct, dataPPro, proAll, creaShow
-# from utils_step4 import jitShift, jitRot, jitCrop, barPrg, jitData, jitItall, jitListChart
-import pandas as pd
 from sklearn.utils import shuffle
-from shutil import copyfile
-import numpy as np
 import tensorflow as tf
 from tensorflow.contrib.layers import flatten
-from datetime import datetime as dt
 
 # Helper function: convolutional layer
 def layer_conv(flags, input, name='layer_1_', filter=5, size_in=3, size_out=6, padding='VALID', regularization=None, activation=None, leak=0.2):
@@ -37,6 +29,7 @@ def layer_conv(flags, input, name='layer_1_', filter=5, size_in=3, size_out=6, p
             x = tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding=padding)
 
         return x
+
 
 # Helper function: full connected layer
 def layer_fcon(flags, input, name='layer_2_', size_in=3, size_out=6, regularization=None, activation=None, leak=0.2):
@@ -74,8 +67,8 @@ def layer_flatten(input, name='layer_3_'):
 
 # Helper function: evaluate the loss and accuracy of the model
 def evaluate(args, flags, logits, images, labels, one_hot_y):
-    correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(one_hot_y, 1))
-    accuracy_operation = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+    prediction_correct = tf.equal(tf.argmax(logits, 1), tf.argmax(one_hot_y, 1))
+    accuracy_operation = tf.reduce_mean(tf.cast(prediction_correct, tf.float32))
 
     n_images       = len(images)
     accuracy_total = 0
@@ -93,6 +86,7 @@ def evaluate(args, flags, logits, images, labels, one_hot_y):
     return accuracy_total / n_images
 
 
+# Helper function: train the model
 def model_train(args, flags, logits, images_train, labels_train, images_validation, labels_validation):
     one_hot_y = tf.one_hot(flags.y, 43)
     cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=one_hot_y, logits=logits)
@@ -134,6 +128,7 @@ def model_test(args, flags, logits, images_test, labels_test):
         saver_new.restore(sess, tf.train.latest_checkpoint('./'))
         accuracy_test = evaluate(args, flags, logits,  images_test, labels_test, one_hot_y)
         print("test accuracy = {:.3f}".format(accuracy_test))
+
 
 
 def main():
