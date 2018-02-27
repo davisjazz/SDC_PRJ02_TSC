@@ -49,6 +49,8 @@
 # ----------------------------------------------
 . Saving and Restoring
 ==> https://www.tensorflow.org/programmers_guide/saved_model
+. Exporting and Importing a MetaGraph
+==> https://www.tensorflow.org/versions/r1.1/programmers_guide/meta_graph
 # ----------------------------------------------
 # TENSORBOARD
 # ----------------------------------------------
@@ -67,6 +69,14 @@
 ==> https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.to_csv.html
 . Adobe Color CC
 ==> https://color.adobe.com/Copia-de-Copy-of-Sunset-Camping-color-theme-10363657/
+. Count Values In Pandas Dataframe
+==> https://chrisalbon.com/python/data_wrangling/pandas_dataframe_count_values/
+. Python Data Science Handbook Pdf
+==> http://pythonexample.com/code/python-data-science-handbook-pdf/
+. pandas.Series, pandas.Series.sort_index, pandas.Series.sort_values
+==> https://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html
+==> https://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.sort_index.html#pandas.Series.sort_index
+==> https://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.sort_values.html#pandas.Series.sort_values
 # ----------------------------------------------
 # JUPYTER NOTEBOOK
 # ----------------------------------------------
