@@ -131,12 +131,21 @@ def model_test(args, flags, logits, images_test, labels_test):
 
 
 
+def generator():
+    pass
+
+
+def early_stop():
+    pass
+
+
+
 def main():
     # parameters and placeholders
     args  = parse_args()
     flags = parameters()
 
-    X_train, y_train, s_train, c_train = data_load(args, 'train.p')
+    X_train, y_train, s_train, c_train = data_load(args.dtset, 'train.p')
 
     print('channel X_train[0] : {}'.format(channel(X_train[0])))
 
