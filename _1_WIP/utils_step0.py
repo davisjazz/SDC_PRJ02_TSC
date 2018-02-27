@@ -23,7 +23,7 @@ default_newImg= 'C:/Users/mo/home/_eSDC2_/_PRJ02_/_2_WIP/_1_forge/_coding_/ownDa
 
 # Helper function: command-line / parse parameters
 def parse_args():
-    # y z
+    # y k
     parser = argparse.ArgumentParser(prog='traffic sign recognition', description='train a CNN to recognize traffic sign')
     parser.add_argument('-p', '--dir',    dest='dir', help='root directory path', action='store', type=str, default=default_dir)
     parser.add_argument('-d', '--dtset',  dest='dtset', help='data directory path', action='store', type=str, default=default_data)
@@ -40,20 +40,21 @@ def parse_args():
 
     parser.add_argument('-t', '--tboard', dest='tboard', help='tensorboard materials directory path', action='store', type=str, default=default_tb)
     parser.add_argument('-l', '--log',    dest='log', help='log directory path', action='store', type=str, default=default_log)
-    parser.add_argument('-k', '--ckp',    dest='ckp', help='checkpoint directory path', action='store', type=str, default=default_ckp)
+    parser.add_argument('-z', '--ckp',    dest='ckp', help='checkpoint directory path', action='store', type=str, default=default_ckp)
 
     parser.add_argument('-b', '--tab',    dest='tab', help='table size', action='store', type=list, default=[5,10])
 
     parser.add_argument('-q', '--class',  dest='n_classes', help='number of classes', action='store', type=int, default=43)
-    parser.add_argument('-e', '--epoch',  dest='epochs', help='epochs', action='store', type=int, default=1) # 120)
+    parser.add_argument('-e', '--epoch',  dest='epochs', help='epochs', action='store', type=int, default=100)
     parser.add_argument('-m', '--rate',   dest='rate', help='learning rate', action='store', type=float, default=0.00085)
-    parser.add_argument('-s', '--dropout',   dest='dropout', help='dropout rate', action='store', type=float, default=0.67)
+    parser.add_argument('-s', '--dropout',dest='dropout', help='dropout rate', action='store', type=float, default=0.67)
     parser.add_argument('-u', '--bsize',  dest='batch_size', help='batch size', action='store', type=int, default=100)
+    parser.add_argument('-k', '--topk',  dest='top_k', help='the k largest entries in the vector', action='store', type=int, default=5)
 
     parser.add_argument('-v', '--sprImg', dest='sprImg', help='sprite image', action='store', type=str, default=default_sprImg)
     parser.add_argument('-w', '--sprTsv', dest='sprTsv', help='sprite label', action='store', type=str, default=default_sprTsv)
     parser.add_argument('-x', '--newImg', dest='new_image', help='new images directory path', action='store', type=str, default=default_newImg)
-    parser.add_argument('-y', '--serie', dest='serie', help='new set images directory path', action='store', type=str, default='_serie01_/')
+    parser.add_argument('-y', '--serie',  dest='serie', help='new set images directory path', action='store', type=str, default='_serie01_/')
 
     args   = parser.parse_args()
     return args
@@ -118,25 +119,15 @@ def dir_create(path, dir_dictionary):
             pass
 
 # Helper function: load the dataset in memory
-def data_load(args, file_pickled='train.p'):
-    file = args.dtset + file_pickled
-    try:
-        with open(file, mode='rb') as f:
-            data = pickle.load(f)
-        return data['features'], data['labels'], data['sizes'], data['coords']
-    except:
-        raise IOError('the project data set are not found in the data directory')
-
-# def chMap(image):
-#     if image.shape[-1] == 3:
-#         cMap ='rgb'
-#         ch   = 3
-#     elif image.shape[-1] == 32 or image.shape[-1] == 1:
-#         cMap ='gray'
-#         ch   = 1
-#     else:
-#         raise ValueError('[ERROR] info | channel : {}, Current image.shape: {}'.format(ch,image.shape))
-#     return cMap, ch
+def data_load(path, file_pickled='train.p'):
+    file = path + file_pickled
+    with open(file, mode='rb') as f:
+        data = pickle.load(f)
+        try:
+            return data['features'], data['labels'], data['sizes'], data['coords']
+        except:
+            return data['features'], data['labels']
+            #raise IOError('the project data set are not found in the data directory')
 
 def channel(image):
     if image.shape[-1] == 3:
@@ -157,7 +148,9 @@ def color_map(image):
     return cMap
 
 def main():
+    # parameters and placeholders
     args = parse_args()
+    flags = parameters()
 
     # create directory tree
     dir_dict = {}
@@ -167,9 +160,9 @@ def main():
     dir_create(args.dir, dir_dict)
 
     # load the dataset
-    X_train, y_train, s_train, c_train = data_load(args, 'train.p')
-    X_valid, y_valid, s_valid, c_valid = data_load(args, 'valid.p')
-    X_test, y_test, s_test , c_test    = data_load(args, 'test.p')
+    X_train, y_train, s_train, c_train = data_load(args.dtset, 'train.p')
+    X_valid, y_valid, s_valid, c_valid = data_load(args.dtset, 'valid.p')
+    X_test, y_test, s_test , c_test    = data_load(args.dtset, 'test.p')
 
     # number of training, validating, testing examples
     n_train = len(X_train)

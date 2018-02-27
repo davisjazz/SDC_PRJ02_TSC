@@ -1,5 +1,5 @@
 from utils_step0 import parse_args, parameters, dir_check, dir_create, data_load, channel, color_map
-from utils_step5 import layer_conv, layer_fcon, layer_flatten, evaluate, model_train, model_test
+from utils_step5 import layer_conv, layer_fcon, layer_flatten, evaluate, model_train, model_test, generator, early_stop
 from sklearn.utils import shuffle
 
 
@@ -36,10 +36,12 @@ def main():
     flags = parameters()
 
     # load and shuffle data
-    X_train, y_train, s_train, c_train = data_load(args, 'train.p')
-    X_valid, y_valid, s_valid, c_valid = data_load(args, 'valid.p')
-    # X_train, y_train = data_load(args, 'data/jittered/full/JIT_full_3000_train_0Rgb.p')
-    # X_valid, y_valid = data_load(args, 'data/preprocessed/valid_0Rgb.p')
+    # X_train, y_train, s_train, c_train = data_load(args.dtset, 'train.p')
+    # X_valid, y_valid, s_valid, c_valid = data_load(args.dtset, 'valid.p')
+    # X_train, y_train = data_load(args.full, 'JIT_full_3000_train_0Rgb.p')
+    # X_valid, y_valid, s_valid, c_valid = data_load(args.ppro, 'valid_0Rgb.p')
+    X_train, y_train = data_load(args.full, 'JIT_full_3000_train_1Gray.p')
+    X_valid, y_valid, s_valid, c_valid = data_load(args.ppro, 'valid_1Gray.p')
     X_train, y_train = shuffle(X_train, y_train)
     X_valid, y_valid = shuffle(X_valid, y_valid)
 
