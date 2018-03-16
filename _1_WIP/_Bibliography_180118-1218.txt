@@ -37,6 +37,13 @@
 ==> https://www.datacamp.com/community/tutorials/python-list-comprehension
 . Python List Comprehension
 ==> https://www.programiz.com/python-programming/list-comprehension
+. Building a Bullet Graph in Python <- Practical Business Python
+==> http://pbpython.com/bullet-graph.html
+. Python Plotting With Matplotlib (Guide)
+==> https://realpython.com/blog/python/python-matplotlib-guide/
+. Matplotlib Examples: lines_bars_and_markers example code: barh_demo.py
+==> https://matplotlib.org/examples/lines_bars_and_markers/barh_demo.html
+
 # ----------------------------------------------
 # GITHUB
 # ----------------------------------------------
@@ -51,6 +58,15 @@
 ==> https://www.tensorflow.org/programmers_guide/saved_model
 . Exporting and Importing a MetaGraph
 ==> https://www.tensorflow.org/versions/r1.1/programmers_guide/meta_graph
+. How to train TensorFlow network using a generator to produce inputs?
+==> https://stackoverflow.com/questions/39325275/how-to-train-tensorflow-network-using-a-generator-to-produce-inputs
+. tf.train.batch, 'Inputs and Readers', 'Reading data', 'Reading data'
+==> https://www.tensorflow.org/api_docs/python/tf/train/batch
+==> https://www.tensorflow.org/api_guides/python/io_ops#Input_pipeline
+==> https://www.tensorflow.org/api_guides/python/reading_data#feeding
+==> https://www.tensorflow.org/api_guides/python/reading_data
+. tf.contrib.learn Quickstart
+==> https://www.tensorflow.org/versions/r1.1/get_started/tflearn
 # ----------------------------------------------
 # TENSORBOARD
 # ----------------------------------------------
@@ -59,6 +75,8 @@
 # ----------------------------------------------
 # PANDAS
 # ----------------------------------------------
+. Pandas Tutorial (Data Analysis In Python)
+==> www.youtube.com/watch?v=CmorAWRsCAw&list=PLeo1K3hjS3uuASpe-1LjfG5f14Bnozjwy
 . Visualization
 ==> https://pandas.pydata.org/pandas-docs/stable/visualization.html
 . Quick and Dirty Data Analysis with Pandas
@@ -77,6 +95,13 @@
 ==> https://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html
 ==> https://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.sort_index.html#pandas.Series.sort_index
 ==> https://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.sort_values.html#pandas.Series.sort_values
+. pandas.DataFrame.plot
+==> https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.plot.html
+. Python for Data Analysis Part 19: Frequency Tables
+==> http://hamelg.blogspot.de/2015/11/python-for-data-analysis-part-19_17.html
+. pandas.crosstab
+==> http://pandas.pydata.org/pandas-docs/version/0.17.0/generated/pandas.crosstab.html
+
 # ----------------------------------------------
 # JUPYTER NOTEBOOK
 # ----------------------------------------------
@@ -87,6 +112,9 @@
 # ----------------------------------------------
 . Install PyCharm and Anaconda (Windows /Mac/Ubuntu)
 ==> https://medium.com/@GalarnykMichael/setting-up-pycharm-with-anaconda-plus-installing-packages-windows-mac-db2b158bd8c
+. Problems with Interactive Plotting in Debug Mode in PyCharm Version 2017.1
+==> https://intellij-support.jetbrains.com/hc/en-us/community/posts/115000143610-Problems-with-Interactive-Plotting-in-Debug-Mode-in-PyCharm-Version-2017-1
+==> https://youtrack.jetbrains.com/issue/PY-23345
 # ----------------------------------------------
 # EXCEL
 # ----------------------------------------------
